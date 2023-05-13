@@ -50,6 +50,8 @@ $ gpt -c color Do you still remember my favorite color?
 > Yes, I remember that your favorite color is blue.
 ```
 
+**Tab-completion for conversation names**
+
 `gpt` also has a `-g` option, which prints out a tab-completion script for conversation names. 
 
 This eases switching between conversations.
