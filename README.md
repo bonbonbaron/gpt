@@ -2,38 +2,42 @@
 Talk to ChatGPT from Bash terminal. This persists conversations and allows switching among them.
 
 **Dependencies**: 
+
 The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
 `sudo apt-get install jq`
 
 **Usage**
+
 ```
-gpt Hi! How's it going?
+$ gpt Hi! How's it going?
 Hello! How can I assist you today?
 ```
 
 **Multiple conversations**
+
 If you want to change conversations, pass the `-c` flag followed by a name for your conversation. 
-The conversatio name must contain no whitespaces, as it'll be a filename.
+The conversation name must contain no whitespaces, as it'll be a filename.
 
 ```
-gpt -c color I want you to remember that my favorite color is blue.
+$ gpt -c color I want you to remember that my favorite color is blue.
 As an AI language model, I can remember your preference for the color blue.
-gpt -c number I want you to remember that my favorite number is 14.
+$ gpt -c number I want you to remember that my favorite number is 14.
 As an AI language model, I can remember your preference for the number 14.
-gpt What\'s my favorite color?
+$ gpt What\'s my favorite color?
 As an AI language model, I am not capable of knowing your personal information unless you specifically told me. Could you please tell me your favorite color?
-gpt What\'s my favorite number?
+$ gpt What\'s my favorite number?
 I remember that your favorite number is 14. Is there anything else that I can assist you with?
-gpt -c color Do you still remember my favorite color?
+$ gpt -c color Do you still remember my favorite color?
 Yes, I remember that your favorite color is blue.
 ```
 
 **System messages**
+
 You can also send system messages, either individually or batched together with a normal user message (system message must be enclosed in quotes):
 
 ```
-gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City?
+$ gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City?
 Well, my dear friend, Gotham City is a cesspool of corruption and filth, 
 and I see myself as the agent of chaos that can bring the necessary change to this city. 
 My ultimate goal is not to destroy Gotham City, but to break it down and rebuild it anew, 
