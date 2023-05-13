@@ -64,14 +64,18 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-OPENAI_API_KEY=$(cat ${HOME}/Documents/GPT_KEY)
-GPT_DIR=$(dirname $0)
-CON_DIR=${HOME}/.gpt_convos
+GPT_DIR=${HOME}/.gpt
+if [ ! -d GPT_DIR ]; then
+  mkdir -p $GPT_DIR
+fi
+
+CON_DIR=${GPT_DIR}/.convos
 IS_INTERACTIVE=false
 if [ ! -d $CON_DIR ]; then
   mkdir -p $CON_DIR
 fi
 
+OPENAI_API_KEY=$(cat $GPT_DIR/GPT_KEY)
 CONVO=$GPT_DIR/convo
 SYS_MSG=
 
@@ -118,6 +122,10 @@ fi
 if $IS_INTERACTIVE; then
   while true; do
     echo -ne '\e[1;32m[You]:\e[m '; read newMsg
+    if [ $newMsg = 'quit' -o $newMsg = 'q' -o $newMsg = 'exit' -o $newMsg = 'bye' ]; then
+      echo -ne '\e[1;34m[GPT]:\e[m Bye!\n'
+      exit 0
+    fi
     appendConversation user $newMsg
     output=$(sendMsg)
     echo -ne '\e[1;34m[GPT]:\e[m '; procOutput "$output"

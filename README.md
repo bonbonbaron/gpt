@@ -3,6 +3,8 @@ Talk to ChatGPT from Bash terminal. This persists conversations and allows switc
 
 ## Dependencies
 
+First and foremost, you must have an API key. Put this key's value in `${HOME}/.gpt/GPT_KEY`.
+
 The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
 `sudo apt-get install jq`
@@ -78,9 +80,7 @@ $ gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City
 
 ## Interactive mode
 
-If you want to have a continuous conversation with ChatGPT instead of having to type the `gpt` command every time, 
-
-use the `-i` option for interactive mode. 
+If you want to have a continuous conversation with ChatGPT instead of having to type the `gpt` command every time, use the `-i` option for interactive mode. You can exit interactive mode bye saying "quit", "q", "exit", "bye", or just pressing CTRL+C.
 
 ```
 $ gpt -i
@@ -88,3 +88,5 @@ $ gpt -i
 > [GPT]: Hello! How may I assist you today?
 > [You]: I'd like for you to count to ten.
 > [GPT]: Sure, I can count to ten for you!
+> [You]: bye
+> [GPT]: Bye!
