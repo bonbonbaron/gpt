@@ -62,7 +62,7 @@ output=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
         $(cat $CONVO)
         ] 
       }" \
-      #| jq  '.choices[0].message.content'\
+      | jq  '.choices[0].message.content'\
     )
 
 echo $output
