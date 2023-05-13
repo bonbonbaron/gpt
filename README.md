@@ -1,21 +1,20 @@
 # gpt
 Talk to ChatGPT from Bash terminal. This persists conversations and allows switching among them.
 
-**NOTE**: 
+**Dependencies**: 
 The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
 `sudo apt-get install jq`
 
+**Usage**
+```
+gpt Hi! How's it going?
+Hello! How can I assist you today?
+```
 
-Example input:
-
-`gpt Hi! How's it going?`
-
-Example output:
-
-`Hello! How can I assist you today?`
-
-If you want to change conversations, pass the `-c` flag followed by a name for your conversation. Name must contain no whitespaces as it'll be a filename.
+**Multiple conversations**
+If you want to change conversations, pass the `-c` flag followed by a name for your conversation. 
+The conversatio name must contain no whitespaces, as it'll be a filename.
 
 ```
 gpt -c color I want you to remember that my favorite color is blue.
@@ -30,6 +29,7 @@ gpt -c color Do you still remember my favorite color?
 Yes, I remember that your favorite color is blue.
 ```
 
+**System messages**
 You can also send system messages, either individually or batched together with a normal user message (system message must be enclosed in quotes):
 
 ```
