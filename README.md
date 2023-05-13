@@ -23,23 +23,23 @@ The conversation name must contain no whitespaces, as it'll be a filename.
 ```
 $ gpt -c color I want you to remember that my favorite color is blue.
 
-  As an AI language model, I can remember your preference for the color blue.
+> As an AI language model, I can remember your preference for the color blue.
 
 $ gpt -c number I want you to remember that my favorite number is 14.
 
-  As an AI language model, I can remember your preference for the number 14.
+> As an AI language model, I can remember your preference for the number 14.
 
 $ gpt What\'s my favorite color?
 
-  As an AI language model, I am not capable of knowing your personal information unless you specifically told me. Could you please tell me your favorite color?
+> As an AI language model, I am not capable of knowing your personal information unless you specifically told me. Could you please tell me your favorite color?
 
 $ gpt What\'s my favorite number?
 
-  I remember that your favorite number is 14. Is there anything else that I can assist you with?
+> I remember that your favorite number is 14. Is there anything else that I can assist you with?
 
 $ gpt -c color Do you still remember my favorite color?
 
-  Yes, I remember that your favorite color is blue.
+> Yes, I remember that your favorite color is blue.
 ```
 
 `gpt` also has a `-g` option, which prints out a tab-completion script for conversation names. 
@@ -49,7 +49,7 @@ This eases switching between conversations.
 ```
 $ gpt -g
 
-  function gpt_convo_autocomplete {
+> function gpt_convo_autocomplete {
     COMPREPLY+=($(find ${HOME}/.gpt_convos/ -type f -name "${2}*" -exec basename {} \;))
   }
 
@@ -65,7 +65,7 @@ You can also send system messages, either individually or batched together with 
 ```
 $ gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City?
 
-  Well, my dear friend, Gotham City is a cesspool of corruption and filth, 
+> Well, my dear friend, Gotham City is a cesspool of corruption and filth, 
   and I see myself as the agent of chaos that can bring the necessary change to this city. 
   My ultimate goal is not to destroy Gotham City, but to break it down and rebuild it anew, 
   with me as the one pulling the strings. And what better way to do that than to cause 
