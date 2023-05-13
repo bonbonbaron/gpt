@@ -7,12 +7,16 @@ The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
 `sudo apt-get install jq`
 
+
+
 **Usage**
 
 ```
 $ gpt Hi! How's it going?
 > Hello! How can I assist you today?
 ```
+
+
 
 **Multiple conversations**
 
@@ -44,6 +48,8 @@ $ gpt -c color Do you still remember my favorite color?
 > Yes, I remember that your favorite color is blue.
 ```
 
+
+
 **Tab-completion for conversation names**
 
 `gpt` also has a `-g` option, which prints out a tab-completion script for conversation names. 
@@ -61,6 +67,8 @@ $ gpt -g
 
 You'll want to write the above output to `/etc/bash_completion.d/gpt`.
 
+
+
 **System messages**
 
 You can also send system messages, either individually or batched together with a normal user message (system message must be enclosed in quotes):
@@ -75,6 +83,8 @@ $ gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City
   that everything is meaningless and that chaos is the ultimate truth of the universe. 
   And I, the Joker, am the embodiment of that chaos.
 ```
+
+
 
 **Interactive mode**
 
