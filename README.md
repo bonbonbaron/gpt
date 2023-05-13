@@ -1,6 +1,12 @@
 # gpt
 Talk to ChatGPT from Bash terminal. This persists conversations and allows switching among them.
 
+**NOTE**: 
+The only dependency not built-in to most terminals is `jq`.
+You can resolve this with:
+`sudo apt-get install jq`
+
+
 Example input:
 
 `gpt Hi! How's it going?`
