@@ -6,51 +6,83 @@
 #This source code is licensed under the BSD-style license found in the
 #LICENSE file in the root directory of this source tree.
 
+# This function writes to the current conversation file.
+# Args: 1: role, 2: content
+function appendConversation {
+  # Guard against invalid roles.
+  role=
+  case $1 in
+    user|system|assistant) role=$1;;
+    *) echo "[appendConversation] Illegal role: $1. Must be either system, user, or assistant. Exitting..."
+       exit;;
+  esac
+  shift
+  local input="$@"
+  # Count lines in current conversation file. Assume it's new if 0.
+  if [ ! -z "$input" ]; then
+    nLines=$(wc -l $CONVO | awk '{print $1}')
+    if [ ${nLines} -eq 0 ]; then
+      echo "{\"role\": \"$role\", \"content\": \"$@\"}" >> $CONVO
+    else
+      echo ", {\"role\": \"$role\", \"content\": \"$@\"}" >> $CONVO
+    fi
+  fi
+}
+
+which js >/dev/null
+if [ $? -ne 0 ]; then
+  echo -e "$0 relies on js. Try this command:\n\tsudo apt-get install js"
+fi
+
 OPENAI_API_KEY=$(cat ${HOME}/Documents/GPT_KEY)
 GPT_DIR=$(dirname $0)
+CON_DIR=${GPT_DIR}/convos
+if [ ! -d $CON_DIR ]; then
+  mkdir -p $CON_DIR
+fi
+
 CONVO=$GPT_DIR/convo
+SYS_MSG=
 
 # Allow the user to resume any conversation.
-while getopts "c:l" _opt; do
+while getopts "s:c:l" _opt; do
   case $_opt in
-    c) if [ ! -e $GPT_DIR/convos/${OPTARG} ]; then
-         touch $GPT_DIR/convos/${OPTARG};
+    # Switch to another conversation. If it exists, we'll resume that one. 
+    # Otherwise, it starts a new one.
+    c) if [ ! -e $CON_DIR/${OPTARG} ]; then
+         touch $CON_DIR/${OPTARG};
        fi
        rm -f $GPT_DIR/convo
-       ln -s $GPT_DIR/convos/${OPTARG} $GPT_DIR/convo
+       ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo
        ;;
-    l) ls $GPT_DIR/convos;;
+    # List available conversations in the convos directory.
+    l) ls $CON_DIR;;
+    # Send a system message to ChatGPT. 
+    # This must be enclosed in quotes if you want to batch it together with a normal, user message.
+    s) SYS_MSG="$OPTARG";;
     *) echo $_opt is an invalid option. Exitting...
        exit 1;;
   esac
 done
 
 if [ ! -e $CONVO ]; then
-  rm -f $GPT_DIR/convos/default 2>/dev/null
+  rm -f $CON_DIR/default 2>/dev/null
   rm -f $CONVO 2>/dev/null
-  touch $GPT_DIR/convos/default
-  ln -s $GPT_DIR/convos/default $CONVO
+  touch $CON_DIR/default
+  ln -s $CON_DIR/default $CONVO
 fi
 
 # Prevent sending ChatGPT empty messages.
 shift $((OPTIND - 1))
 input="$@"
-if [ $# -lt 1 ]; then
+if [ $# -lt 1 -a -z "$SYS_MSG" ]; then
   echo "$0: I refuse to waste money by sending ChatGPT an empty message. Exitting..."
-  exit 1
-elif [ "$input" = '' ]; then
-  echo "empty string"
   exit 1
 fi
 
-# TODO need validation of input before appending garbage to conversation file.
-# Append input.
-nLines=$(wc -l $CONVO | awk '{print $1}')
-if [ ${nLines} -eq 0 ]; then
-  echo "{\"role\": \"user\", \"content\": \"${input}\"}" >> convo
-else
-  echo ", {\"role\": \"user\", \"content\": \"${input}\"}" >> convo
-fi
+# Append system and user messages (if they exist) to conversation file.
+appendConversation system $SYS_MSG
+appendConversation user ${input}
 
 # Send the message!
 output=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
@@ -65,9 +97,10 @@ output=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
       | jq  '.choices[0].message.content'\
     )
 
-echo $output
+echo -e $output
+output=$(echo $output | sed 's/\\/\\\\/g')
 
 # Append user's input to the conversation ONLY IF we got good output.
 if [ ! "$output" = 'null' ]; then
-  echo -e ", {\"role\": \"assistant\", \"content\": ${output}}" >> convo
+  appendConversation assistant $output
 fi
