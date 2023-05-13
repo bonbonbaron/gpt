@@ -1,0 +1,73 @@
+#!/bin/bash
+
+#Copyright (c) 2023, Michael Baucum
+#All rights reserved.
+
+#This source code is licensed under the BSD-style license found in the
+#LICENSE file in the root directory of this source tree.
+
+OPENAI_API_KEY=$(cat ${HOME}/Documents/GPT_KEY)
+GPT_DIR=$(dirname $0)
+CONVO=$GPT_DIR/convo
+
+# Allow the user to resume any conversation.
+while getopts "c:l" _opt; do
+  case $_opt in
+    c) if [ ! -e $GPT_DIR/convos/${OPTARG} ]; then
+         touch $GPT_DIR/convos/${OPTARG};
+       fi
+       rm -f $GPT_DIR/convo
+       ln -s $GPT_DIR/convos/${OPTARG} $GPT_DIR/convo
+       ;;
+    l) ls $GPT_DIR/convos;;
+    *) echo $_opt is an invalid option. Exitting...
+       exit 1;;
+  esac
+done
+
+if [ ! -e $CONVO ]; then
+  rm -f $GPT_DIR/convos/default 2>/dev/null
+  rm -f $CONVO 2>/dev/null
+  touch $GPT_DIR/convos/default
+  ln -s $GPT_DIR/convos/default $CONVO
+fi
+
+# Prevent sending ChatGPT empty messages.
+shift $((OPTIND - 1))
+input="$@"
+if [ $# -lt 1 ]; then
+  echo "$0: I refuse to waste money by sending ChatGPT an empty message. Exitting..."
+  exit 1
+elif [ "$input" = '' ]; then
+  echo "empty string"
+  exit 1
+fi
+
+# TODO need validation of input before appending garbage to conversation file.
+# Append input.
+nLines=$(wc -l $CONVO | awk '{print $1}')
+if [ ${nLines} -eq 0 ]; then
+  echo "{\"role\": \"user\", \"content\": \"${input}\"}" >> convo
+else
+  echo ", {\"role\": \"user\", \"content\": \"${input}\"}" >> convo
+fi
+
+# Send the message!
+output=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d "{
+        \"model\": \"gpt-3.5-turbo\", 
+        \"messages\": [
+        $(cat $CONVO)
+        ] 
+      }" \
+      #| jq  '.choices[0].message.content'\
+    )
+
+echo $output
+
+# Append user's input to the conversation ONLY IF we got good output.
+if [ ! "$output" = 'null' ]; then
+  echo -e ", {\"role\": \"assistant\", \"content\": ${output}}" >> convo
+fi
