@@ -80,7 +80,7 @@ $ gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City
 
 ## Interactive mode
 
-If you want to have a continuous conversation with ChatGPT instead of having to type the `gpt` command every time, use the `-i` option for interactive mode. You can exit interactive mode bye saying "quit", "q", "exit", "bye", or just pressing CTRL+C.
+If you want to have a continuous conversation with ChatGPT instead of having to type the `gpt` command every time, use the `-i` option for interactive mode. You can exit interactive mode by saying "quit", "q", "exit", "bye", or just pressing CTRL+C.
 
 ```
 $ gpt -i
