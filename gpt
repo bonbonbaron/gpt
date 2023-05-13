@@ -29,6 +29,8 @@ function appendConversation {
   fi
 }
 
+AUTOCOMPLETION_CMD='function gpt_convo_autocomplete {\n\tCOMPREPLY+=($(find ${HOME}/.gpt_convos/ -type f -name "${2}*" -exec basename {} \;))\n}\n\ncomplete -F gpt_convo_autocomplete gpt\n'
+
 which js >/dev/null
 if [ $? -ne 0 ]; then
   echo -e "$0 relies on js. Try this command:\n\tsudo apt-get install js"
@@ -37,7 +39,7 @@ fi
 
 OPENAI_API_KEY=$(cat ${HOME}/Documents/GPT_KEY)
 GPT_DIR=$(dirname $0)
-CON_DIR=${GPT_DIR}/convos
+CON_DIR=${HOME}/.gpt_convos
 if [ ! -d $CON_DIR ]; then
   mkdir -p $CON_DIR
 fi
@@ -46,7 +48,7 @@ CONVO=$GPT_DIR/convo
 SYS_MSG=
 
 # Allow the user to resume any conversation.
-while getopts "s:c:l" _opt; do
+while getopts "gs:c:l" _opt; do
   case $_opt in
     # Switch to another conversation. If it exists, we'll resume that one. 
     # Otherwise, it starts a new one.
@@ -61,7 +63,9 @@ while getopts "s:c:l" _opt; do
     # Send a system message to ChatGPT. 
     # This must be enclosed in quotes if you want to batch it together with a normal, user message.
     s) SYS_MSG="$OPTARG";;
-    *) echo $_opt is an invalid option. Exitting...
+    g) echo -e ${AUTOCOMPLETION_CMD}
+       exit;;
+    *) echo $_opt is an invalid option. Exitting...\n
        exit 1;;
   esac
 done
@@ -94,14 +98,16 @@ output=$(curl -s -X POST https://api.openai.com/v1/chat/completions \
         \"messages\": [
         $(cat $CONVO)
         ] 
-      }" \
-      | jq  '.choices[0].message.content'\
-    )
+      }")
 
-echo -e $output
-output=$(echo $output | sed 's/\\/\\\\/g')
+jqFilteredOutput=$(echo $output | jq  '.choices[0].message.content')
+jqFilteredOutput=$(echo $jqFilteredOutput | sed -E 's/"(.*)"/\1/g')
 
 # Append user's input to the conversation ONLY IF we got good output.
-if [ ! "$output" = 'null' ]; then
-  appendConversation assistant $output
+if [ ! "$jqFilteredOutput" = 'null' ]; then
+  echo -e $jqFilteredOutput
+  appendConversation assistant $jqFilteredOutput
+else
+  echo Error: $(echo $output | jq '.error.message')
+  exit 1
 fi
