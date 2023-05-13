@@ -32,6 +32,7 @@ function appendConversation {
 which js >/dev/null
 if [ $? -ne 0 ]; then
   echo -e "$0 relies on js. Try this command:\n\tsudo apt-get install js"
+  exit 1
 fi
 
 OPENAI_API_KEY=$(cat ${HOME}/Documents/GPT_KEY)
