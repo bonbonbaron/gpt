@@ -56,7 +56,7 @@ function procOutput {
   fi
 }
 
-AUTOCOMPLETION_CMD='function gpt_convo_autocomplete {\n\tCOMPREPLY+=($(find ${HOME}/.gpt_convos/ -type f -name "${2}*" -exec basename {} \;))\n}\n\ncomplete -F gpt_convo_autocomplete gpt\n'
+AUTOCOMPLETION_CMD='function gpt_convo_autocomplete {\n\tCOMPREPLY+=($(find ${HOME}/.gpt/.convos/ -type f -name "${2}*" -exec basename {} \;))\n}\n\ncomplete -F gpt_convo_autocomplete gpt\n'
 
 which js >/dev/null
 if [ $? -ne 0 ]; then
@@ -120,9 +120,10 @@ fi
 
 # Send the message or talk in a loop.
 if $IS_INTERACTIVE; then
+  appendConversation system $SYS_MSG
   while true; do
     echo -ne '\e[1;32m[You]:\e[m '; read newMsg
-    if [ $newMsg = 'quit' -o $newMsg = 'q' -o $newMsg = 'exit' -o $newMsg = 'bye' ]; then
+    if [ "$newMsg" = 'quit' -o "$newMsg" = 'q' -o "$newMsg" = 'exit' -o "$newMsg" = 'bye' ]; then
       echo -ne '\e[1;34m[GPT]:\e[m Bye!\n'
       exit 0
     fi
