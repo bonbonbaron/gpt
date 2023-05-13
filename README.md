@@ -1,24 +1,20 @@
 # gpt
 Talk to ChatGPT from Bash terminal. This persists conversations and allows switching among them.
 
-**Dependencies**: 
+#Dependencies: 
 
 The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
 `sudo apt-get install jq`
 
-
-
-**Usage**
+Usage
 
 ```
 $ gpt Hi! How's it going?
 > Hello! How can I assist you today?
 ```
 
-
-
-**Multiple conversations**
+#Multiple conversations
 
 If you want to change conversations, pass the `-c` flag followed by a name for your conversation. 
 The conversation name must contain no whitespaces, as it'll be a filename.
@@ -48,9 +44,7 @@ $ gpt -c color Do you still remember my favorite color?
 > Yes, I remember that your favorite color is blue.
 ```
 
-
-
-**Tab-completion for conversation names**
+##Tab-completion for conversation names
 
 `gpt` also has a `-g` option, which prints out a tab-completion script for conversation names. 
 
@@ -67,9 +61,7 @@ $ gpt -g
 
 You'll want to write the above output to `/etc/bash_completion.d/gpt`.
 
-
-
-**System messages**
+#System messages
 
 You can also send system messages, either individually or batched together with a normal user message (system message must be enclosed in quotes):
 
@@ -84,9 +76,7 @@ $ gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City
   And I, the Joker, am the embodiment of that chaos.
 ```
 
-
-
-**Interactive mode**
+#Interactive mode
 
 If you want to have a continuous conversation with ChatGPT instead of having to type the `gpt` command every time, 
 
@@ -97,10 +87,4 @@ $ gpt -i
 > [You]: Hi
 > [GPT]: Hello! How may I assist you today?
 > [You]: I'd like for you to count to ten.
-> [GPT]: Sure, I can count to ten for you! Here we go:
-
-1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-
-Is there anything else you'd like for me to do today?"
-> [You]: 
-```
+> [GPT]: Sure, I can count to ten for you!
