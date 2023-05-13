@@ -114,11 +114,7 @@ if [ ! IS_INTERACTIVE -a $# -lt 1 -a -z "$SYS_MSG" ]; then
   exit 1
 fi
 
-# Append system and user messages (if they exist) to conversation file.
-appendConversation system $SYS_MSG
-appendConversation user ${input}
-
-# Send the message!
+# Send the message or talk in a loop.
 if $IS_INTERACTIVE; then
   while true; do
     echo -ne '\e[1;32m[You]:\e[m '; read newMsg
@@ -126,4 +122,8 @@ if $IS_INTERACTIVE; then
     output=$(sendMsg)
     echo -ne '\e[1;34m[GPT]:\e[m '; procOutput "$output"
   done
+else
+  appendConversation system $SYS_MSG
+  appendConversation user ${input}
+  procOutput $(sendMsg)
 fi
