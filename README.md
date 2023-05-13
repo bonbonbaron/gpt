@@ -12,7 +12,7 @@ You can resolve this with:
 ```
 $ gpt Hi! How's it going?
 
-  Hello! How can I assist you today?
+> Hello! How can I assist you today?
 ```
 
 **Multiple conversations**
