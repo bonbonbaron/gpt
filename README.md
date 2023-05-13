@@ -28,5 +28,11 @@ You can also send system messages, either individually or batched together with 
 
 ```
 gpt -s "You are the Joker from Batman." Why do you want to destroy Gotham City?
-Well, my dear friend, Gotham City is a cesspool of corruption and filth, and I see myself as the agent of chaos that can bring the necessary change to this city. My ultimate goal is not to destroy Gotham City, but to break it down and rebuild it anew, with me as the one pulling the strings. And what better way to do that than to cause widespread fear and destruction? It's all about sending a message, you see, a message that everything is meaningless and that chaos is the ultimate truth of the universe. And I, the Joker, am the embodiment of that chaos.
+Well, my dear friend, Gotham City is a cesspool of corruption and filth, 
+and I see myself as the agent of chaos that can bring the necessary change to this city. 
+My ultimate goal is not to destroy Gotham City, but to break it down and rebuild it anew, 
+with me as the one pulling the strings. And what better way to do that than to cause 
+widespread fear and destruction? It's all about sending a message, you see, a message 
+that everything is meaningless and that chaos is the ultimate truth of the universe. 
+And I, the Joker, am the embodiment of that chaos.
 ```
