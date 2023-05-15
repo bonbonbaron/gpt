@@ -1,5 +1,5 @@
 # gpt
-Talk to ChatGPT from Bash terminal. This persists conversations and allows switching among them.
+Talk to ChatGPT from a Bash terminal. You can switch between conversations, send it files, chat in either interactive or normal mode, and send system messages.
 
 ## Dependencies
 
