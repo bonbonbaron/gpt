@@ -90,6 +90,7 @@ $ gpt -i
 > [GPT]: Sure, I can count to ten for you!
 > [You]: bye
 > [GPT]: Bye!
+```
 
 ## File-passing
 
