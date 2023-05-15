@@ -121,17 +121,18 @@ if [ ! -z "$FILE_TO_READ" -a -e "$FILE_TO_READ" ]; then
   cLine=1
   while [ $cLine -lt $nLines ]; do
     toLine=$((cLine + 99))
-    echo "printing from $cLine to $toLine from $FILE_TO_READ"
+    # TODO i'm not sure this next line matters, but don't want to break what's already working. It's bed time.
     IFS=
 
-    textBatch="$(sed -n $cLine,${toLine}p ${FILE_TO_READ} | paste -sd '\n' - )"
-    # | sed 's/\"/\\"/g' | sed -z 's/\n/\\n/g')"
-    echo "$textBatch" 
-    #if [ $cLine -eq 1 ]; then
-      #appendConversation user "remember this: $textBatch"
-    #else
-      #appendConversation user "also remember this: $textBatch"
-    #fi
+    textBatch="$(sed -n $cLine,${toLine}p ${FILE_TO_READ})"
+    textBatch=$(echo $textBatch | sed -z 's/\n/\\n/g')
+    textBatch=$(echo $textBatch | sed 's/"/\\"/g')
+    #echo "$textBatch" 
+    if [ $cLine -eq 1 ]; then
+      appendConversation user "remember this: $textBatch"
+    else
+      appendConversation user "also remember this: $textBatch"
+    fi
     #echo -e "$textBatch"
     #echo -e '\n\n~~~~~~~~~~~\n\n'
     ((cLine += 100))

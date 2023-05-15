@@ -90,3 +90,30 @@ $ gpt -i
 > [GPT]: Sure, I can count to ten for you!
 > [You]: bye
 > [GPT]: Bye!
+
+## File-passing
+
+If you want to share a file with ChatGPT, you can use the `-f` option followed by a filename:
+
+```
+$ gpt -f main.c Explain this source code to me.
+> This code snippet is a simple C program that contains a small mistake. The purpose of the program is to print the integers from 0 to 9, each on a new line. Let me explain the code line by line:
+
+  1. `#include <stdio.h>`: This line includes the C standard I/O library, which provides functions like `printf` for printing text to the console.
+
+  2. `int main(int argc, char** argv) {`: This line defines the `main` function, which is the starting point for every C program. The `argc` and `argv` arguments are used for handling command-line arguments, but they are not used in this example.
+
+  3. `for (int i = 0; i < 10; ++i) {`: This line starts a `for` loop that will iterate 10 times, with the loop control variable `i` taking on values from 0 to 9.
+
+  4. `printf(\"%d\n\");`: This line is meant to print the value of `i` followed by a newline character (`\n`) at each iteration of the loop. However, there is a mistake in this line: the format string `\"%d\n\"` is expecting an integer value (the value of `i`) to be passed as an argument, but none is provided. The correct line should be: `printf(\"%d\n\", i);`.
+
+  5. `}`: This line closes the `for` loop.
+
+  6. `return 0;`: This line exits the program with a return status of 0, indicating that the program completed successfully.
+
+  7. `}`: This line closes the `main` function.
+
+  To fix the code, you need to change line 4 to include the loop control variable `i` as a function argument, like so: `printf(\"%d\n\", i);`
+
+  With this fix, the program will correctly print the integers from 0 to 9, each on a new line."}
+```
