@@ -78,7 +78,7 @@ fi
 OPENAI_API_KEY=$(cat $GPT_DIR/GPT_KEY)
 CONVO=$GPT_DIR/convo
 SYS_MSG=
-FILE_TO_READ=
+FILES_TO_READ=()
 
 # TODO to be safe, we could have a fixed, conservative number of lines from any text file populate a message. 
 # We'll test this out with a file I know well. I'll have it look through xRender.c and tell me to list all 
@@ -102,7 +102,7 @@ while getopts "f:igs:c:l" _opt; do
     g) echo -e ${AUTOCOMPLETION_CMD}
        exit;;
     i) IS_INTERACTIVE=true;;
-    f) FILE_TO_READ="$OPTARG";;
+    f) FILES_TO_READ+=("$OPTARG");;
     *) echo -e "$_opt is an invalid option. Exitting...\n"
        exit 1;;
   esac
@@ -115,27 +115,31 @@ if [ ! -e $CONVO ]; then
   ln -s $CON_DIR/default $CONVO
 fi
 
-# Read file into conversation.
-if [ ! -z "$FILE_TO_READ" -a -e "$FILE_TO_READ" ]; then
-  nLines=$(wc -l $FILE_TO_READ | awk '{print $1}')
-  cLine=1
-  while [ $cLine -lt $nLines ]; do
-    toLine=$((cLine + 99))
-    # TODO i'm not sure this next line matters, but don't want to break what's already working. It's bed time.
-    IFS=
+# Read file(s) into conversation.
+if [ ${#FILES_TO_READ[*]} -gt 0 ]; then
+  for f in ${FILES_TO_READ[*]}; do
+    if [ ! -z "$f" -a -e "$f" ]; then
+      nLines=$(wc -l $f | awk '{print $1}')
+      cLine=1
+      while [ $cLine -lt $nLines ]; do
+        toLine=$((cLine + 999))
+        # TODO i'm not sure this next line matters, but don't want to break what's already working. It's bedtime.
+        IFS=
 
-    textBatch="$(sed -n $cLine,${toLine}p ${FILE_TO_READ})"
-    textBatch=$(echo $textBatch | sed -z 's/\n/\\n/g')
-    textBatch=$(echo $textBatch | sed 's/"/\\"/g')
-    #echo "$textBatch" 
-    if [ $cLine -eq 1 ]; then
-      appendConversation user "remember this: $textBatch"
-    else
-      appendConversation user "also remember this: $textBatch"
+        textBatch="$(sed -n $cLine,${toLine}p $f)"
+        textBatch=$(echo $textBatch | sed -z 's/\n/\\n/g')
+        textBatch=$(echo $textBatch | sed 's/"/\\"/g')
+        #echo "$textBatch" 
+        if [ $cLine -eq 1 ]; then
+          appendConversation user "remember this: $textBatch"
+        else
+          appendConversation user "also remember this: $textBatch"
+        fi
+        #echo -e "$textBatch"
+        #echo -e '\n\n~~~~~~~~~~~\n\n'
+        ((cLine += 1000))
+      done
     fi
-    #echo -e "$textBatch"
-    #echo -e '\n\n~~~~~~~~~~~\n\n'
-    ((cLine += 100))
   done
 fi
 
@@ -144,8 +148,8 @@ fi
 # Prevent sending ChatGPT empty messages.
 shift $((OPTIND - 1))
 input="$@"
-if [ ! -z "$FILE_TO_READ" -a ! IS_INTERACTIVE -a $# -lt 1 -a -z "$SYS_MSG" ]; then
-  echo "$0: I refuse to waste money by sending ChatGPT an empty message. Exitting..."
+if [ ${#FILES_TO_READ[*]} -eq 0 -a ! IS_INTERACTIVE -a $# -lt 1 -a -z "$SYS_MSG" ]; then
+  echo "$0: Don't bother sending an empty message. Exitting..."
   exit 1
 fi
 
