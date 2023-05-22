@@ -54,11 +54,20 @@ This eases switching between conversations.
 
 ```
 $ gpt -g
-> function gpt_convo_autocomplete {
-    COMPREPLY+=($(find ${HOME}/.gpt_convos/ -type f -name "${2}*" -exec basename {} \;))
-  }
 
-  complete -F gpt_convo_autocomplete gpt
+> function gpt_convo_autocomplete {
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+	if [ $prev = "-c" ]; then
+		COMPREPLY+=($(find ${HOME}/.gpt/.convos/ -type f -name "${cur}*" -exec basename {} \;))
+	elif [ $prev = "-f" ]; then
+		COMPREPLY=($(compgen -f -- $cur))
+	elif [ $prev = ">" -o $prev = ">>" ]; then
+		COMPREPLY=($(compgen -f -- $cur))
+	else
+		COMPREPLY=()
+	fi
+}
 ```
 
 You'll want to write the above output to `/etc/bash_completion.d/gpt`.

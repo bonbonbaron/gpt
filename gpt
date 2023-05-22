@@ -55,8 +55,8 @@ function procOutput {
     exit 1
   fi
 }
+AUTOCOMPLETION_CMD='\nfunction gpt_convo_autocomplete {\n\tcur="${COMP_WORDS[COMP_CWORD]}"\n\tprev="${COMP_WORDS[COMP_CWORD-1]}"\n\tif [ $prev = "-c" ]; then\n\t\tCOMPREPLY+=($(find ${HOME}/.gpt/.convos/ -type f -name "${cur}*" -exec basename {} \;))\n\telif [ $prev = "-f" ]; then\n\t\tCOMPREPLY=($(compgen -f -- $cur))\n\telif [ $prev = ">" -o $prev = ">>" ]; then\n\t\tCOMPREPLY=($(compgen -f -- $cur))\n\telse\n\t\tCOMPREPLY=()\n\tfi\n}\n\ncomplete -F gpt_convo_autocomplete gpt'
 
-AUTOCOMPLETION_CMD='function gpt_convo_autocomplete {\n\tCOMPREPLY+=($(find ${HOME}/.gpt/.convos/ -type f -name "${2}*" -exec basename {} \;))\n}\n\ncomplete -F gpt_convo_autocomplete gpt\n'
 
 which js >/dev/null
 if [ $? -ne 0 ]; then
@@ -64,18 +64,24 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+SRC_DIR=$(readlink -f $(dirname $0))
+
 GPT_DIR=${HOME}/.gpt
 if [ ! -d GPT_DIR ]; then
   mkdir -p $GPT_DIR
 fi
 
+if [ ! -e $SRC_DIR/.env ]; then
+  echo -e "You need to put a .env file into $SRC first. Populate that file like so:\n\nOPENAI_API_KEY=<your API key>\n"
+  exit 1
+fi
+source .env
 CON_DIR=${GPT_DIR}/.convos
 IS_INTERACTIVE=false
 if [ ! -d $CON_DIR ]; then
   mkdir -p $CON_DIR
 fi
 
-OPENAI_API_KEY=$(cat $GPT_DIR/GPT_KEY)
 CONVO=$GPT_DIR/convo
 SYS_MSG=
 FILES_TO_READ=()
@@ -128,23 +134,16 @@ if [ ${#FILES_TO_READ[*]} -gt 0 ]; then
         textBatch="$(sed -n $cLine,${toLine}p $f)"
         #textBatch=$(echo $textBatch | sed -z 's/\([\r\t\f"\\]\)/\\\1/g;')
         textBatch=$(echo $textBatch | jq -sRr @json | sed -E 's/"(.*)"/\1/g')
-        #textBatch=$(echo $textBatch | sed -z 's/\\/\\\\/g; s/"/\\"/g; ')
-        #echo $textBatch
-        #exit
         if [ $cLine -eq 1 ]; then
           appendConversation user "remember this: $textBatch"
         else
           appendConversation user "also remember this: $textBatch"
         fi
-        #echo -e "$textBatch"
-        #echo -e '\n\n~~~~~~~~~~~\n\n'
         ((cLine += 1000))
       done
     fi
   done
 fi
-
-#exit
 
 # Prevent sending ChatGPT empty messages.
 shift $((OPTIND - 1))
