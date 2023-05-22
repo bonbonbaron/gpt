@@ -102,7 +102,9 @@ while getopts "f:igs:c:l" _opt; do
     g) echo -e ${AUTOCOMPLETION_CMD}
        exit;;
     i) IS_INTERACTIVE=true;;
-    f) FILES_TO_READ+=("$OPTARG");;
+    f) for o in $OPTARG; do
+         FILES_TO_READ+=("$o")
+       done;;
     *) echo -e "$_opt is an invalid option. Exitting...\n"
        exit 1;;
   esac
@@ -123,13 +125,12 @@ if [ ${#FILES_TO_READ[*]} -gt 0 ]; then
       cLine=1
       while [ $cLine -lt $nLines ]; do
         toLine=$((cLine + 999))
-        # TODO i'm not sure this next line matters, but don't want to break what's already working. It's bedtime.
-        IFS=
-
         textBatch="$(sed -n $cLine,${toLine}p $f)"
-        textBatch=$(echo $textBatch | sed -z 's/\n/\\n/g')
-        textBatch=$(echo $textBatch | sed 's/"/\\"/g')
-        #echo "$textBatch" 
+        #textBatch=$(echo $textBatch | sed -z 's/\([\r\t\f"\\]\)/\\\1/g;')
+        textBatch=$(echo $textBatch | jq -sRr @json | sed -E 's/"(.*)"/\1/g')
+        #textBatch=$(echo $textBatch | sed -z 's/\\/\\\\/g; s/"/\\"/g; ')
+        #echo $textBatch
+        #exit
         if [ $cLine -eq 1 ]; then
           appendConversation user "remember this: $textBatch"
         else

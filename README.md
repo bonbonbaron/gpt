@@ -9,7 +9,7 @@ The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
 `sudo apt-get install jq`
 
-Usage
+##Usage
 
 ```
 $ gpt Hi! How's it going?
@@ -92,7 +92,7 @@ $ gpt -i
 > [GPT]: Bye!
 ```
 
-## File-passing
+## File-sending
 
 If you want to share a file with ChatGPT, you can use the `-f` option followed by a filename:
 
@@ -118,3 +118,16 @@ $ gpt -f main.c Explain this source code to me.
 
   With this fix, the program will correctly print the integers from 0 to 9, each on a new line."}
 ```
+
+You can also send multiple files at a time:
+
+```
+$ gpt -f main.c -f render.c -f motion.c which of these files has a bug
+```
+
+Or like this:
+
+```
+$ gpt -f "*.c"
+```
+
