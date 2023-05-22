@@ -3,7 +3,7 @@ Talk to ChatGPT from a Bash terminal. You can switch between conversations, send
 
 ## Dependencies
 
-First and foremost, you must have an API key. Put this key's value in `${HOME}/.gpt/GPT_KEY`.
+First and foremost, you must have an API key. Put this key's value in a `.env` file in the same directory as the `gpt` script.
 
 The only dependency not built-in to most terminals is `jq`.
 You can resolve this with:
