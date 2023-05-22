@@ -128,6 +128,6 @@ $ gpt -f main.c -f render.c -f motion.c which of these files has a bug
 Or like this:
 
 ```
-$ gpt -f "*.c"
+$ gpt -f "*.c" explain how these files work together
 ```
 
