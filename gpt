@@ -4,7 +4,7 @@
 #All rights reserved.
 
 #This source code is licensed under the BSD-style license found in the
-#LICENSE file in the root directory of this source tree.
+#LICENSE file in the root directory of this source tree. 
 
 # This function writes to the current conversation file.
 # Args: 1: role, 2: content
