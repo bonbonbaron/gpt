@@ -42,13 +42,12 @@ function sendMsg {
 }
 
 function procOutput {
-
   jqFilteredOutput=$(echo $@ | jq  '.choices[0].message.content')
   jqFilteredOutput=$(echo $jqFilteredOutput | sed -E 's/"(.*)"/\1/g')
 
   # Append user's input to the conversation ONLY IF we got good output.
   if [ ! "$jqFilteredOutput" = 'null' ]; then
-    echo -e $jqFilteredOutput
+    echo -e "$jqFilteredOutput\n"
     appendConversation assistant $jqFilteredOutput
   else
     echo Error: $(echo $@ | jq '.error.message')
@@ -82,6 +81,9 @@ if [ ! -d $CON_DIR ]; then
   mkdir -p $CON_DIR
 fi
 
+# If you want to continue a previous conversation, you can keep talking using the sym-linked file.
+# Otherwise, if you want to send a bunch of messages in parallel, you'll want to give each parallelized
+# message its own conversation to live in.
 CONVO=$GPT_DIR/convo
 SYS_MSG=
 FILES_TO_READ=()
@@ -90,15 +92,24 @@ FILES_TO_READ=()
 # We'll test this out with a file I know well. I'll have it look through xRender.c and tell me to list all 
 # of its functions and summarize what each one of them does without worrying about externals.
 # Allow the user to resume any conversation.
-while getopts "f:igs:c:l" _opt; do
+while getopts "f:igs:c:lC:" _opt; do
   case $_opt in
     # Switch to another conversation. If it exists, we'll resume that one. 
     # Otherwise, it starts a new one.
     c) if [ ! -e $CON_DIR/${OPTARG} ]; then
          touch $CON_DIR/${OPTARG};
        fi
+       CONVO=$CON_DIR/${OPTARG} # we'll use this file instead of the symlinked "convo" to talk on
        rm -f $GPT_DIR/convo
-       ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo
+       ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null  # don't worry if parallel convos squabble over symlink
+       ;;
+    C) if [ -e $CON_DIR/${OPTARG} ]; then
+        rm $CON_DIR/${OPTARG}
+       fi
+       touch $CON_DIR/${OPTARG}
+       CONVO=$CON_DIR/${OPTARG} # we'll use this file instead of the symlinked "convo" to talk on
+       rm -f $GPT_DIR/convo
+       ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null  # don't worry if parallel convos squabble over symlink
        ;;
     # List available conversations in the convos directory.
     l) ls $CON_DIR;;
@@ -116,11 +127,13 @@ while getopts "f:igs:c:l" _opt; do
   esac
 done
 
-if [ ! -e $CONVO ]; then
+# If the symlinked "convo" file doesn't exist (points to our current conversation), 
+# then delete the old "default" conversation and make a new convo point at a fresh one.
+if [ ! -e $GPT_DIR/convo ]; then
   rm -f $CON_DIR/default 2>/dev/null
   rm -f $CONVO 2>/dev/null
   touch $CON_DIR/default
-  ln -s $CON_DIR/default $CONVO
+  ln -s $CON_DIR/default $CONVO 2>/dev/null # don't worry if parallel convos squabble over symlink
 fi
 
 # Read file(s) into conversation.
@@ -132,7 +145,7 @@ if [ ${#FILES_TO_READ[*]} -gt 0 ]; then
       while [ $cLine -lt $nLines ]; do
         toLine=$((cLine + 999))
         textBatch="$(sed -n $cLine,${toLine}p $f)"
-        #textBatch=$(echo $textBatch | sed -z 's/\([\r\t\f"\\]\)/\\\1/g;')
+        textBatch=$(echo $textBatch | sed -z 's/\([\r\t\f"$\\]\)/\\\1/g;')
         textBatch=$(echo $textBatch | jq -sRr @json | sed -E 's/"(.*)"/\1/g')
         if [ $cLine -eq 1 ]; then
           appendConversation user "remember this: $textBatch"
@@ -148,7 +161,7 @@ fi
 # Prevent sending ChatGPT empty messages.
 shift $((OPTIND - 1))
 input="$@"
-if [ ${#FILES_TO_READ[*]} -eq 0 -a ! IS_INTERACTIVE -a $# -lt 1 -a -z "$SYS_MSG" ]; then
+if [ ${#FILES_TO_READ[*]} -eq 0 -a ! $IS_INTERACTIVE -a $# -lt 1 -a -z "$SYS_MSG" ]; then
   echo "$0: Don't bother sending an empty message. Exitting..."
   exit 1
 fi
@@ -157,6 +170,7 @@ fi
 if $IS_INTERACTIVE; then
   appendConversation system $SYS_MSG
   while true; do
+exit 0
     echo -ne '\e[1;32m[You]:\e[m '; read newMsg
     if [ "$newMsg" = 'quit' -o "$newMsg" = 'q' -o "$newMsg" = 'exit' -o "$newMsg" = 'bye' ]; then
       echo -ne '\e[1;34m[GPT]:\e[m Bye!\n'
@@ -169,5 +183,6 @@ if $IS_INTERACTIVE; then
 else
   appendConversation system $SYS_MSG
   appendConversation user ${input}
-  procOutput $(sendMsg)
+  output=$(sendMsg)
+  procOutput $output
 fi
