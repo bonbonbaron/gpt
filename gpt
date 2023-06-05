@@ -92,8 +92,11 @@ FILES_TO_READ=()
 # We'll test this out with a file I know well. I'll have it look through xRender.c and tell me to list all 
 # of its functions and summarize what each one of them does without worrying about externals.
 # Allow the user to resume any conversation.
-while getopts "f:igs:c:lC:" _opt; do
+while getopts "rf:igs:c:lC:" _opt; do
   case $_opt in
+    # Replay last message from ChatGPT.
+    r) echo -e $(tail -1 $CONVO | sed -E 's/, (.*)/\1/' | jq '.content' | sed -E 's/"(.*)"/\1/')
+       exit;;
     # Switch to another conversation. If it exists, we'll resume that one. 
     # Otherwise, it starts a new one.
     c) if [ ! -e $CON_DIR/${OPTARG} ]; then

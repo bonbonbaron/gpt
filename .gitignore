@@ -2,3 +2,4 @@
 convo
 convos/**
 **/.env
+.db
