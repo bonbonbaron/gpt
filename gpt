@@ -173,7 +173,6 @@ fi
 if $IS_INTERACTIVE; then
   appendConversation system $SYS_MSG
   while true; do
-exit 0
     echo -ne '\e[1;32m[You]:\e[m '; read newMsg
     if [ "$newMsg" = 'quit' -o "$newMsg" = 'q' -o "$newMsg" = 'exit' -o "$newMsg" = 'bye' ]; then
       echo -ne '\e[1;34m[GPT]:\e[m Bye!\n'
