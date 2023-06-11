@@ -6,6 +6,26 @@
 #This source code is licensed under the BSD-style license found in the
 #LICENSE file in the root directory of this source tree. 
 
+function displayHelp {
+  echo "Usage: $0 [options] [message]"
+  echo
+  echo "Options:"
+  echo "-h Display this help message."
+  echo "-r Replay last message from ChatGPT."
+  echo "-c <filename> Continue a specific conversation."
+  echo "-C <filename> Clear an existing conversation or start a new one with the given filename."
+  echo "-l List available conversations in the convos directory."
+  echo "-s <message> Send a system message to ChatGPT."
+  echo "-g Provide shell autocompletion."
+  echo "-i Enter interactive mode."
+  echo "-f <files> Read and process file(s) into the conversation."
+  echo
+  echo "Example:"
+  echo "$(basename $0) -s \"Remember, you are chatting with a programmer.\" \"Hi, I need help with some code.\""
+  echo
+  exit 1
+}
+
 # This function writes to the current conversation file.
 # Args: 1: role, 2: content
 function appendConversation {
@@ -92,7 +112,7 @@ FILES_TO_READ=()
 # We'll test this out with a file I know well. I'll have it look through xRender.c and tell me to list all 
 # of its functions and summarize what each one of them does without worrying about externals.
 # Allow the user to resume any conversation.
-while getopts "rf:igs:c:lC:" _opt; do
+while getopts "hrf:igs:c:lC:" _opt; do
   case $_opt in
     # Replay last message from ChatGPT.
     r) echo -e $(tail -1 $CONVO | sed -E 's/, (.*)/\1/' | jq '.content' | sed -E 's/"(.*)"/\1/')
@@ -106,6 +126,7 @@ while getopts "rf:igs:c:lC:" _opt; do
        rm -f $GPT_DIR/convo
        ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null  # don't worry if parallel convos squabble over symlink
        ;;
+    h) display_help;;
     C) if [ -e $CON_DIR/${OPTARG} ]; then
         rm $CON_DIR/${OPTARG}
        fi
