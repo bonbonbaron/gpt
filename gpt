@@ -67,13 +67,19 @@ function procOutput {
 
   # Append user's input to the conversation ONLY IF we got good output.
   if [ ! "$jqFilteredOutput" = 'null' ]; then
-    echo -e "$jqFilteredOutput\n"
+    echo -e "\e[0;32m$jqFilteredOutput\e[0m\n"
     appendConversation assistant $jqFilteredOutput
   else
     echo Error: $(echo $@ | jq '.error.message')
     exit 1
   fi
 }
+
+ #elif [ $prev = \"-f\" ]; then
+ #COMPREPLY=($(compgen -f -- $cur))
+ #elif [ $prev = \">\" -o $prev = \">>\" ]; then
+ #COMPREPLY=($(compgen -f -- $cur))
+
 AUTOCOMPLETION_CMD='\nfunction gpt_convo_autocomplete {\n\tcur="${COMP_WORDS[COMP_CWORD]}"\n\tprev="${COMP_WORDS[COMP_CWORD-1]}"\n\tif [ $prev = "-c" ]; then\n\t\tCOMPREPLY+=($(find ${HOME}/.gpt/.convos/ -type f -name "${cur}*" -exec basename {} \;))\n\telif [ $prev = "-f" ]; then\n\t\tCOMPREPLY=($(compgen -f -- $cur))\n\telif [ $prev = ">" -o $prev = ">>" ]; then\n\t\tCOMPREPLY=($(compgen -f -- $cur))\n\telse\n\t\tCOMPREPLY=()\n\tfi\n}\n\ncomplete -F gpt_convo_autocomplete gpt'
 
 
@@ -112,44 +118,96 @@ FILES_TO_READ=()
 # We'll test this out with a file I know well. I'll have it look through xRender.c and tell me to list all 
 # of its functions and summarize what each one of them does without worrying about externals.
 # Allow the user to resume any conversation.
-while getopts "hrf:igs:c:lC:" _opt; do
+while getopts \"hrf:igs:c:lC:\" _opt; do
   case $_opt in
     # Replay last message from ChatGPT.
-    r) echo -e $(tail -1 $CONVO | sed -E 's/, (.*)/\1/' | jq '.content' | sed -E 's/"(.*)"/\1/')
-       exit;;
-    # Switch to another conversation. If it exists, we'll resume that one. 
+    r)
+    echo -e $(tail -1 $CONVO | sed -E 's/, (.*)/\\1/' | jq '.content' | sed -E 's/\\"(.*)\\"/\\1/')
+    exit
+    ;;
+    # Switch to another conversation. If it exists, we'll resume that one.
     # Otherwise, it starts a new one.
-    c) if [ ! -e $CON_DIR/${OPTARG} ]; then
-         touch $CON_DIR/${OPTARG};
-       fi
-       CONVO=$CON_DIR/${OPTARG} # we'll use this file instead of the symlinked "convo" to talk on
-       rm -f $GPT_DIR/convo
-       ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null  # don't worry if parallel convos squabble over symlink
-       ;;
-    h) display_help;;
-    C) if [ -e $CON_DIR/${OPTARG} ]; then
-        rm $CON_DIR/${OPTARG}
-       fi
-       touch $CON_DIR/${OPTARG}
-       CONVO=$CON_DIR/${OPTARG} # we'll use this file instead of the symlinked "convo" to talk on
-       rm -f $GPT_DIR/convo
-       ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null  # don't worry if parallel convos squabble over symlink
-       ;;
+    c)
+    if [ ! -e $CON_DIR/${OPTARG} ]; then
+      touch $CON_DIR/${OPTARG}
+    fi
+    CONVO=$CON_DIR/${OPTARG}
+    rm -f $GPT_DIR/convo 2>/dev/null
+    ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null
+    for f in \"${FILES_TO_READ[@]}\"; do
+      if [ ! -z \"$f\" -a -e \"$f\" ]; then
+        nLines=$(wc -l $f | awk '{print $1}')
+        cLine=1
+        while [ $cLine -lt $nLines ]; do
+          toLine=$((cLine + 999))
+          textBatch=\"$(sed -n $cLine,${toLine}p $f)\"
+          textBatch=$(echo $textBatch | sed -z 's/\\([\\r\\t\\f\\"\$\\\\]\\)/\\\\\\1/g;')
+          textBatch=$(echo $textBatch | jq -sRr @json | sed -E 's/\\"(.*)\\"/\\1/g')
+          if [ $cLine -eq 1 ]; then
+            appendConversation user \"remember this: $textBatch\"
+          else
+            appendConversation user \"also remember this: $textBatch\"
+          fi
+          ((cLine += 1000))
+        done
+      fi
+    done
+    FILES_TO_READ=()
+    ;;
+  h) display_help
+    ;;
+  C)
+    if [ -e $CON_DIR/${OPTARG} ]; then
+      rm $CON_DIR/${OPTARG}
+    fi
+    touch $CON_DIR/${OPTARG}
+    CONVO=$CON_DIR/${OPTARG}
+    rm -f $GPT_DIR/convo 2>/dev/null
+    ln -s $CON_DIR/${OPTARG} $GPT_DIR/convo 2>/dev/null
+    for f in "${FILES_TO_READ[@]}"; do
+      if [ ! -z "$f" -a -e "$f" ]; then
+        nLines=$(wc -l $f | awk '{print $1}')
+        cLine=1
+        while [ $cLine -lt $nLines ]; do
+          toLine=$((cLine + 999))
+          textBatch="$(sed -n $cLine,${toLine}p $f)"
+          textBatch=$(echo $textBatch | sed -z 's/\\([\\r\\t\\f\"\$\\\\]\\)/\\\\\\1/g;')
+          textBatch=$(echo $textBatch | jq -sRr @json | sed -E 's/\"(.*)\"/\\1/g')
+          if [ $cLine -eq 1 ]; then
+            appendConversation user "remember this: $textBatch"
+          else
+            appendConversation user "also remember this: $textBatch"
+          fi
+          ((cLine += 1000))
+        done
+      fi
+    done
+    FILES_TO_READ=()
+    ;;
     # List available conversations in the convos directory.
-    l) ls $CON_DIR;;
-    # Send a system message to ChatGPT. 
+    l)
+    ls $CON_DIR
+    ;;
+    # Send a system message to ChatGPT.
     # This must be enclosed in quotes if you want to batch it together with a normal, user message.
-    s) SYS_MSG="$OPTARG";;
-    g) echo -e ${AUTOCOMPLETION_CMD}
-       exit;;
-    i) IS_INTERACTIVE=true;;
-    f) for o in $OPTARG; do
-         FILES_TO_READ+=("$o")
-       done;;
-    *) echo -e "$_opt is an invalid option. Exitting...\n"
-       exit 1;;
-  esac
+    s)
+    SYS_MSG="$OPTARG"
+    ;;
+  g)
+    echo -e ${AUTOCOMPLETION_CMD}
+    exit
+    ;;
+  i) IS_INTERACTIVE=true
+    ;;
+  f) FILES_TO_READ+=("$OPTARG")
+    ;;
+  *)
+    echo -e "$_opt is an invalid option. Exiting...\n"
+    exit 1
+    ;;
+esac
 done
+
 
 # If the symlinked "convo" file doesn't exist (points to our current conversation), 
 # then delete the old "default" conversation and make a new convo point at a fresh one.
