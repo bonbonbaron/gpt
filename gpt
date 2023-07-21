@@ -115,15 +115,18 @@ CONVO=$GPT_DIR/convo
 SYS_MSG=
 FILES_TO_READ=()
 
+function getLastMsg() {
+  echo "[$(cat $CONVO)]" | jq '.[-1].content' 
+}
+
 # TODO to be safe, we could have a fixed, conservative number of lines from any text file populate a message. 
 # We'll test this out with a file I know well. I'll have it look through xRender.c and tell me to list all 
 # of its functions and summarize what each one of them does without worrying about externals.
 # Allow the user to resume any conversation.
-while getopts \"hrf:igs:c:lC:\" _opt; do
+while getopts \"XxmMhrf:igs:c:lC:\" _opt; do
   case $_opt in
     # Replay last message from ChatGPT.
     r)
-    #echo -e $(tail -1 $CONVO | sed -E 's/, (.*)/\\1/' | jq '.[-1].content' | sed -E 's/\\"(.*)\\"/\\1/')
     echo -e "\e[1;32m$(echo "[$(cat $CONVO)]" | jq '.[-1].content' | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g')"
     exit
     ;;
@@ -155,6 +158,28 @@ while getopts \"hrf:igs:c:lC:\" _opt; do
       fi
     done
     FILES_TO_READ=()
+    ;;
+  # Make a file containing all code found in GPTs latest message. TODO filter by filetype
+  m) 
+    echo "[$(cat $CONVO)]" | jq '.[-1].content' | sed -n -E 's/.*```[a-z]*\\n(.*)\\n```.*/\1\nif [ $? -ne 0 ]; then\n  exit 1;\nfi/gp' | sed -e 's/\\n/\n/g'
+    exit $?;
+    ;;
+  # Make a file containing all code found in entire conversation with GPT. TODO filter by filetype
+  M) 
+    echo "[$(cat $CONVO)]" | jq '.[].content' | sed -n -E 's/.*```[a-z]*\\n(.*)\\n```.*/echo -e "\e[0;33m\1\e[0m"\n\1\nif [ $? -ne 0 ]; then\n  exit 1;\nfi\n/gp' | sed -e 's/\\n/\n/g'
+    exit $?;
+    ;;
+  x) 
+    echo "[$(cat $CONVO)]" | jq '.[-1].content' | sed -n -E 's/.*```[a-z]*\\n(.*)\\n```.*/echo -e \"\\e[0;33m\1\\e[0m\"\n\1\nif [ $? -ne 0 ]; then\n  exit 1;\nfi/gp' | sed -e 's/\\n/\n/g' > ./tmpScript
+    chmod +x ./tmpScript
+    ./tmpScript
+    exit $?;
+    ;;
+  X)
+    echo "[$(cat $CONVO)]" | jq '.[].content' | sed -n -E 's/.*```[a-z]*\\n(.*)\\n```.*/echo -e \"\\e[0;33m\1\\e[0m\"\n\1\nif [ $? -ne 0 ]; then\n  exit 1;\nfi/gp' | sed -e 's/\\n/\n/g' > ./tmpScript
+    chmod +x ./tmpScript
+    ./tmpScript
+    exit $?;
     ;;
   h) display_help
     ;;

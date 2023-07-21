@@ -144,3 +144,92 @@ Or like this:
 $ gpt -f "*.c" explain how these files work together
 ```
 
+## Printing code
+
+You can print all code snippets in either the latest message or the whole conversation to stdout using the `-m` and `-M` options, respectively:
+
+```
+$ gpt -m
+> 
+#!/bin/bash
+
+for i in {1..10}
+do
+ echo "Count: $i"
+done
+if [ $? -ne 0 ]; then
+  exit 1;
+fi
+```
+
+
+```
+$ gpt -M
+> 
+#!/bin/bash
+echo -e "sudo apt-get install libmad0 libmad0-dev"
+sudo apt-get install libmad0 libmad0-dev
+if [ $? -ne 0 ]; then
+  exit 1;
+fi
+
+echo -e "sudo apt-get install libogg-dev libvorbis-dev"
+sudo apt-get install libogg-dev libvorbis-dev
+if [ $? -ne 0 ]; then
+  exit 1;
+fi
+
+... etc etc etc
+
+for i in {1..10}
+do
+ echo "Count: $i"
+done
+if [ $? -ne 0 ]; then
+  exit 1;
+fi
+```
+
+
+## Printing code
+You can have it run the code in its latest message to you or in the whole conversation with `-x` and `-X`, resepectively:
+
+```
+$ gpt -x
+>
+#!/bin/bash
+
+for i in {1..10}
+do
+ echo "Count: "
+done
+
+"Count: 1"
+"Count: 2"
+"Count: 3"
+"Count: 4"
+"Count: 5"
+"Count: 6"
+"Count: 7"
+"Count: 8"
+"Count: 9"
+"Count: 10"
+```
+
+```
+$ gpt -X
+>
+sudo apt-get install libmad0 libmad0-dev
+Reading package lists...
+Building dependency tree...
+Reading state information...
+libmad0 is already the newest version (0.15.1b-10).
+libmad0-dev is already the newest version (0.15.1b-10).
+0 upgraded, 0 newly installed, 0 to remove and 79 not upgraded.
+sudo apt-get install libogg-dev libvorbis-dev
+Reading package lists...
+Building dependency tree...
+Reading state information...
+
+... etc etc etc
+```
