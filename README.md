@@ -191,7 +191,7 @@ fi
 ```
 
 
-## Printing code
+## Executing code
 You can have it run the code in its latest message to you or in the whole conversation with `-x` and `-X`, resepectively:
 
 ```
