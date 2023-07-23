@@ -67,7 +67,8 @@ function procOutput {
 
   # Append user's input to the conversation ONLY IF we got good output.
   if [ ! "$jqFilteredOutput" = 'null' ]; then
-    echo -e "\\e[1;32m$(echo $jqFilteredOutput | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g')"
+    #echo -e "\\e[1;32m$(echo $jqFilteredOutput | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g; s/[^`]`(.*)`[^`]/\\e[1;34m\1\\e[1;32m/g')"
+    echo -e "\e[1;32m$(echo $jqFilteredOutput | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g; s/([^`]`)([^`]*)(`[^`])/\1\\e[1;34m\2\\e[1;32m\3/g')"
     #echo -e "\e[0;32m$jqFilteredOutput\e[0m\n"
     appendConversation assistant $jqFilteredOutput
   else
@@ -127,7 +128,7 @@ while getopts \"XxmMhrf:igs:c:lC:\" _opt; do
   case $_opt in
     # Replay last message from ChatGPT.
     r)
-    echo -e "\e[1;32m$(echo "[$(cat $CONVO)]" | jq '.[-1].content' | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g')"
+    echo -e "\e[1;32m$(echo "[$(cat $CONVO)]" | jq '.[-1].content' | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g; s/([^`]`)([^`]*)(`[^`])/\1\\e[1;34m\2\\e[1;32m\3/g')"
     exit
     ;;
     # Switch to another conversation. If it exists, we'll resume that one.
