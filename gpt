@@ -6,6 +6,10 @@
 #This source code is licensed under the BSD-style license found in the
 #LICENSE file in the root directory of this source tree. 
 
+#TODO add support for 3.5 turbo too.
+
+TOKEN_LIMIT=8191
+
 function displayHelp {
   echo "Usage: $0 [options] [message]"
   echo
@@ -49,6 +53,7 @@ function appendConversation {
   fi
 }
 
+# function for sending ChatGPT a message.
 function sendMsg {
   curl -s -X POST https://api.openai.com/v1/chat/completions \
     -H 'Content-Type: application/json' \
@@ -62,18 +67,47 @@ function sendMsg {
 }
 
 function procOutput {
+  #echo $@ | jq '.'
+  #exit 0
+  # Get the total number of tokens used. 
+  nTokensUsed=$(echo $@ | jq '.usage.total_tokens' | tr -d '"')
   jqFilteredOutput=$(echo $@ | jq  '.choices[0].message.content')
   jqFilteredOutput=$(echo $jqFilteredOutput | sed -E 's/"(.*)"/\1/g')
 
-  # Append user's input to the conversation ONLY IF we got good output.
-  if [ ! "$jqFilteredOutput" = 'null' ]; then
+  test $nTokensUsed -lt $TOKEN_LIMIT 2>/dev/null
+  withinLimit=$?
+
+  # Append user's input to the conversation ONLY IF we got good output. Also make sure he didn't run out of room to finish his response. (Kinda scary that I'm calling it "he".)
+  if [ ! "$jqFilteredOutput" = 'null' -a ! "$nTokensUsed" = "null" -a $withinLimit -eq 0 ]; then
     #echo -e "\\e[1;32m$(echo $jqFilteredOutput | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g; s/[^`]`(.*)`[^`]/\\e[1;34m\1\\e[1;32m/g')"
     echo -e "\e[1;32m$(echo $jqFilteredOutput | sed -E 's/```([^\\n]*)\\n([^`]*)```/```\1\\n\\e[1;31m\2\\e[1;32m```/g; s/\\"/\"/g; s/([^`]`)([^`]*)(`[^`])/\1\\e[1;34m\2\\e[1;32m\3/g')"
     #echo -e "\e[0;32m$jqFilteredOutput\e[0m\n"
     appendConversation assistant $jqFilteredOutput
   else
-    echo Error: $(echo $@ | jq '.error.message')
-    exit 1
+    if [ $withinLimit -ne 0 ]; then
+      echo "nTokensUsed tokens exceeded limit of $TOKEN_LIMIT. Cutting down..."
+    else
+      echo "We're now at $nTokensUsed / $TOKEN_LIMIT."
+    fi
+    # TODO implement staples
+    # TODO give up if the conversation is empty or only full of staples
+    # If we've run out of room in the conversation, delete the first three lines (more sophisticated later).
+    if [ $withinLimit -ne 0 -o $(echo "$@" | jq '.error.code') = "\"context_length_exceeded\"" ]; then
+      if [ $withinLimit -ne 0 ]; then
+        echo "Token limit was exceed on response. Making room in conversation for a complete response. Now trying again..."
+      fi
+      sleep 1  # lowers chance of rate limit error
+      # Get line number of the largest message.
+      longestLineNum=$(awk '{print length, NR}' $CONVO | sort -h | tail -1 | sed -E -n 's/.* (.*)/\1/gp')
+      sed -i "${longestLineNum}d" $CONVO
+      # Recurse through send-and-receive till we stop getting errors or running out of tokens.
+      output=$(sendMsg)
+      procOutput $output
+    else
+      echo "$@" | jq '.error.code'
+      echo Error: $(echo $@ | jq '.')
+      exit 1
+    fi
   fi
 }
 
@@ -84,7 +118,7 @@ function procOutput {
 
 AUTOCOMPLETION_CMD='\nfunction gpt_convo_autocomplete {\n\tcur="${COMP_WORDS[COMP_CWORD]}"\n\tprev="${COMP_WORDS[COMP_CWORD-1]}"\n\tif [ $prev = "-c" ]; then\n\t\tCOMPREPLY+=($(find ${HOME}/.gpt/.convos/ -type f -name "${cur}*" -exec basename {} \;))\n\telif [ $prev = "-f" ]; then\n\t\tCOMPREPLY=($(compgen -f -- $cur))\n\telif [ $prev = ">" -o $prev = ">>" ]; then\n\t\tCOMPREPLY=($(compgen -f -- $cur))\n\telse\n\t\tCOMPREPLY=()\n\tfi\n}\n\ncomplete -F gpt_convo_autocomplete gpt'
 
-
+# Make sure the user has jq, which processes JSON data.
 which js >/dev/null
 if [ $? -ne 0 ]; then
   echo -e "$0 relies on js. Try this command:\n\tsudo apt-get install js"
@@ -159,6 +193,9 @@ while getopts \"XxmMhrf:igs:c:lC:\" _opt; do
       fi
     done
     FILES_TO_READ=()
+    if [ $# -eq 2 ]; then
+      exit 0
+    fi
     ;;
   # Make a file containing all code found in GPTs latest message. TODO filter by filetype
   m) 
@@ -211,6 +248,9 @@ while getopts \"XxmMhrf:igs:c:lC:\" _opt; do
       fi
     done
     FILES_TO_READ=()
+    if [ $# -eq 2 ]; then
+      exit 0
+    fi
     ;;
     # List available conversations in the convos directory.
     l)
